@@ -116,7 +116,7 @@ class TopologicalVis(object):
         #print col
         if to_node:
             V2= to_node.pose.position
-            marker.scale.x = 0.1
+            marker.scale.x = 5
             marker.color.a = 0.5
             marker.color.r = col[0]
             marker.color.g = col[1]
@@ -135,9 +135,9 @@ class TopologicalVis(object):
         marker.id = idn
         marker.header.frame_id = "/map"
         marker.type = Marker.SPHERE
-        marker.scale.x = 0.2
-        marker.scale.y = 0.2
-        marker.scale.z = 0.2
+        marker.scale.x = 10
+        marker.scale.y = 10
+        marker.scale.z = 10
         marker.color.a = 0.4
         marker.color.r = 0.2
         marker.color.g = 0.2
@@ -153,7 +153,7 @@ class TopologicalVis(object):
         marker.id = idn
         marker.header.frame_id = "/map"
         marker.type = marker.LINE_STRIP
-        marker.scale.x = 0.1
+        marker.scale.x = 5
         marker.color.a = 0.8
         marker.color.r = 0.7
         marker.color.g = 0.1
