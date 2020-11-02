@@ -138,7 +138,7 @@ class TopologicalVis(object):
         marker.scale.x = 10
         marker.scale.y = 10
         marker.scale.z = 10
-        marker.color.a = 0.4
+        marker.color.a = 0.5
         marker.color.r = 0.2
         marker.color.g = 0.2
         marker.color.b = 0.7
