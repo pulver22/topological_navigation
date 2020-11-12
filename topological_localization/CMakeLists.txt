@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(topological_navigation)
+project(topological_localization)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS rospy std_msgs nav_msgs sensor_msgs actionlib_msgs mongodb_store strands_navigation_msgs message_generation)
+find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs message_generation)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -40,33 +40,33 @@ catkin_python_setup()
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
+ add_message_files(
+   FILES
+   ProbabilityDistributionStamped.msg
 #   Message2.msg
-# )
+ )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+  LocalizeAgent.srv
+  StopLocalize.srv
+)
 
 ## Generate actions in the 'action' folder
-add_action_files(
-  DIRECTORY action
-  FILES
-  GotoNode.action
+#add_action_files(
+#  DIRECTORY action
+#  FILES
+#  GotoNode.action
 #  ExecutePolicy.action
-)
+#)
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
    DEPENDENCIES
    std_msgs
-   actionlib_msgs
-   sensor_msgs
+#   actionlib_msgs
+#   sensor_msgs
 #   strands_navigation_msgs
 )
 
@@ -82,7 +82,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES topological_patroller
-  CATKIN_DEPENDS actionlib_msgs
+#  CATKIN_DEPENDS actionlib_msgs
 #  DEPENDS system_lib
 )
 
@@ -122,18 +122,7 @@ include_directories(
 # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
 
  install(PROGRAMS
-   scripts/localisation.py
-   scripts/nav_client.py
-   scripts/navigation.py
-   scripts/visualise_map.py
-   scripts/map_manager.py
-   scripts/travel_time_estimator.py
-   scripts/execute_policy_server.py
-   scripts/topological_prediction.py
-   scripts/get_simple_policy.py
-   scripts/manual_edge_predictions.py
-   scripts/speed_based_prediction.py
-   scripts/reconf_at_edges_server.py
+   scripts/localization_node.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 
@@ -142,10 +131,10 @@ install(DIRECTORY launch
    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
-install(DIRECTORY tests
-   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-   USE_SOURCE_PERMISSIONS
-)
+# install(DIRECTORY tests
+#    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+#    USE_SOURCE_PERMISSIONS
+# )
 
 
 
@@ -162,12 +151,12 @@ install(DIRECTORY tests
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-if (CATKIN_ENABLE_TESTING)
-  find_package(catkin REQUIRED COMPONENTS rostest)
-
-  add_rostest(tests/travel_time_estimator.test)
-
-#  temporarily disabling Morse based tests
-#  add_rostest(tests/navigation_scenarios.test)
-
-endif()
+#if (CATKIN_ENABLE_TESTING)
+#  find_package(catkin REQUIRED COMPONENTS rostest)
+#
+#  add_rostest(tests/travel_time_estimator.test)
+#
+##  temporarily disabling Morse based tests
+##  add_rostest(tests/navigation_scenarios.test)
+#
+#endif()

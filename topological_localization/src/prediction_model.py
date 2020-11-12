@@ -5,19 +5,19 @@ class PredictionModel:
     CTMC = 0 # continuous-time markov chain
     IDENTITY = 1 # remain in the same node
 
-    def __init__(self, node_coords, node_diffs2D=[], node_distances=[], connected_nodes=[], pred_type=PredictionModel.CTMC):
+    def __init__(self, pred_type=PredictionModel.CTMC, node_coords=[], node_diffs2D=[], node_distances=[], connected_nodes=[]):
+        self.pred_type = pred_type
         self.node_coords = np.array(node_coords)
         self.node_diffs2D = np.array(node_diffs2D)
         self.node_distance = np.array(node_distances)
         self.connected_nodes = np.array(connected_nodes)
-        self.pred_type = pred_type
 
     # always predict the node it's already in
     def _identity(self, node):
         return [1.], [node]
 
     # transition probability governed by the continuous markov model
-    def _ctmc(tmap, node, speed, time):
+    def _ctmc(self, tmap, node, speed, time, only_connected=False):
         prob = []
         nodes = []
 
@@ -28,27 +28,27 @@ class PredictionModel:
 
         # trans probability goes mostly to connected nodes and one len(self.connected_nodes)th goes to the unconnected neighboors
         div_coef = len(pos_connected_nodes)
-        if (not only_connected) and len(unconnected_neighboors_nodes):
-            div_coef += 1
+        # if (not only_connected) and len(unconnected_neighboors_nodes):
+        #     div_coef += 1
 
-            # probability of nodes that are not connected but close enough
-            # project speed vector on the edges toward successive nodes
-            diffs_norm = np.dot(self.node_diffs2D[unconnected_neighboors_nodes],
-                                self.node_diffs2D[unconnected_neighboors_nodes].transpose()).diagonal()
-            speed_proj = (np.dot(self.node_diffs2D[unconnected_neighboors_nodes], speed) / diffs_norm).reshape(
-                (-1, 1)) * self.node_diffs2D[unconnected_neighboors_nodes]
-            speed_proj = np.sqrt(
-                np.dot(speed_proj, speed_proj.transpose()).diagonal())
-            if lambda_p <= 0:
-                _lambda_p = - np.log(0.5) * speed_proj / \
-                    self.node_distances[unconnected_neighboors_nodes]
-            else:
-                _lambda_p = np.ones(speed_proj.shape) * lambda_p
-            p_move = 1. - np.exp(- time * _lambda_p)
+        #     # probability of nodes that are not connected but close enough
+        #     # project speed vector on the edges toward successive nodes
+        #     diffs_norm = np.dot(self.node_diffs2D[unconnected_neighboors_nodes],
+        #                         self.node_diffs2D[unconnected_neighboors_nodes].transpose()).diagonal()
+        #     speed_proj = (np.dot(self.node_diffs2D[unconnected_neighboors_nodes], speed) / diffs_norm).reshape(
+        #         (-1, 1)) * self.node_diffs2D[unconnected_neighboors_nodes]
+        #     speed_proj = np.sqrt(
+        #         np.dot(speed_proj, speed_proj.transpose()).diagonal())
+        #     if lambda_p <= 0:
+        #         _lambda_p = - np.log(0.5) * speed_proj / \
+        #             self.node_distances[unconnected_neighboors_nodes]
+        #     else:
+        #         _lambda_p = np.ones(speed_proj.shape) * lambda_p
+        #     p_move = 1. - np.exp(- time * _lambda_p)
 
-            prob += list(((p_move / div_coef) /
-                            len(unconnected_neighboors_nodes)).tolist())
-            nodes += list(unconnected_neighboors_nodes)
+        #     prob += list(((p_move / div_coef) /
+        #                     len(unconnected_neighboors_nodes)).tolist())
+        #     nodes += list(unconnected_neighboors_nodes)
 
         # project speed vector on the edges toward successive nodes
         diffs_norm = np.dot(
