@@ -291,6 +291,10 @@ class TopologicalLocalisation():
 
         # get a likelihood observation and return localisation result
         def __update_likelihood_handler(request):
+            # _tmp_l = zip(request.likelihood.nodes, request.likelihood.values)
+            # _tmp_l.sort(key=lambda x: x[0])
+            # rospy.loginfo("received likelihood for {}, \n {}".format(
+            #     name, _tmp_l))
             if len(request.likelihood.nodes) == len(request.likelihood.values):
                 try:
                     nodes = [np.where(self.node_names == nname)[0][0]

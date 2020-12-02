@@ -18,10 +18,12 @@ class PredictionModel:
         return [1.], [node]
 
     # transition probability governed by the continuous markov model
-    def _ctmc(self, node, speed, time, only_connected=False):
+    def _ctmc(self, node, prev_node, speed, time, only_connected=False):
         prob = []
         nodes = []
         time = max(min(time, 60. * 5), 0.)  # < to avoid overflow error
+        if prev_node is None:
+            prev_node = node
 
         # check if speed and next node have same direction
         same_direction_mask = np.any(speed * self.node_diffs2D[node, self.connected_nodes[node]] >= 0, axis=1)
@@ -50,7 +52,8 @@ class PredictionModel:
                     np.dot(speed_proj, speed_proj.transpose()).diagonal())
 
                 _lambda_p = - np.log(0.5) * speed_proj / \
-                    self.node_distances[node][unconnected_neighboors_nodes]
+                    (0.5 * (self.node_distances[prev_node][node] + 
+                            self.node_distances[node][unconnected_neighboors_nodes]))
 
                 _p_move = 1. - np.exp(- time * _lambda_p)
 
@@ -72,7 +75,8 @@ class PredictionModel:
         # lambda = (0.6931 * speed) / dist, so that p(transitioning) = 0.5 when the position is halfway between current and next node
         # because exp(-lambda * tau) = 0.5 => ln(0.5) = -0.6931 = - lambda * tau, where tau is time in the node
         lambda_p = - np.log(0.5) * speed_proj / \
-            self.node_distances[node][pos_connected_nodes]
+            (0.5 * (self.node_distances[prev_node][node] +
+                    self.node_distances[node][pos_connected_nodes]))
 
         p_move = 1. - np.exp(- time * lambda_p)
 
@@ -92,8 +96,8 @@ class PredictionModel:
         return prob, nodes
 
     # returns the prediction in form of a probability distribution over nodes given time and speed
-    def predict(self, node, time=None, speed=None, only_connected=False):
+    def predict(self, node, prev_node=None, time=None, speed=None, only_connected=False):
         if self.pred_type == PredictionModel.CTMC:
-            return self._ctmc(node=node, speed=speed, time=time, only_connected=only_connected)
+            return self._ctmc(node=node, prev_node=prev_node, speed=speed, time=time, only_connected=only_connected)
         else:
             return self._identity(node)

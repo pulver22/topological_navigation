@@ -21,7 +21,7 @@ class TopologicalParticleFilter():
 
         # current particles
         self.particles = np.empty((self.n_of_ptcl))
-        # previous timestep particles
+        # keep the node the particles were in before jumping to the current one (not necessary last timestep)
         self.prev_particles = np.empty((self.n_of_ptcl))
         # particles after prediction phase
         self.predicted_particles = np.empty((self.n_of_ptcl))
@@ -46,8 +46,6 @@ class TopologicalParticleFilter():
         # speed decay when doing only prediction (it does eventually stop)
         self.prediction_speed_decay = prediction_speed_decay
 
-
-
         self.lock = threading.Lock()
 
     def _normalize(self, arr):
@@ -64,7 +62,7 @@ class TopologicalParticleFilter():
         cov_x = np.max([cov_x, 0.2])
         cov_y = np.max([cov_y, 0.2])
         cov_M = np.matrix([[cov_x, 0.], [0., cov_y]])    # cov matrix
-        det_M = cov_x * cov_y                           # det cov matrix
+        det_M = cov_x * cov_y                            # det cov matrix
         diffs2D = np.matrix(self.node_coords[nodes] - np.array([mu_x, mu_y]))
         up = np.exp(- 0.5 * (diffs2D * cov_M.I * diffs2D.T).diagonal())
         probs = np.array(up / np.sqrt((2*np.pi)**2 * det_M))
@@ -117,10 +115,12 @@ class TopologicalParticleFilter():
 
         for particle_idx in range(self.n_of_ptcl):
 
-            p_node = self.particles[particle_idx]
+            curr_node = self.particles[particle_idx]
+            prev_node = self.prev_particles[particle_idx]
 
             transition_p, t_nodes = self.prediction_model.predict(
-                node=p_node,
+                node=curr_node,
+                # prev_node=prev_node,
                 speed=self.current_speed,
                 time=self.life[particle_idx],
                 only_connected=only_connected
@@ -161,7 +161,7 @@ class TopologicalParticleFilter():
                 self.W[indices] = likelihood[nodes_dist.index(node)]
 
         # TODO if W doesn't sum up to 1 then re-initialize the particles with this obs
-        # it measn the particles are disjoint from this obs
+        # maybe not here, this is a likelihood.
 
     # produce the node estimate based on topological mass from particles and their weight
     def _estimate_node(self, use_weight=True):
@@ -179,7 +179,7 @@ class TopologicalParticleFilter():
 
     def _resample(self, use_weight=True):
         # pass
-        self.prev_particles = np.copy(self.particles)
+        tmp_particles = np.copy(self.particles)
         if use_weight:
             prob = self._normalize(self.W)
             self.particles = np.random.choice(
@@ -188,9 +188,9 @@ class TopologicalParticleFilter():
             self.particles = np.copy(self.predicted_particles)
 
         ## reset life time if particle jumped in another node
-        for particle_idx in range(self.n_of_ptcl):
-            if self.particles[particle_idx] != self.prev_particles[particle_idx]:
-                self.life[particle_idx] = 0
+        diff_node_mask = (self.particles != tmp_particles)
+        self.life[diff_node_mask] = 0
+        self.prev_particles[diff_node_mask] = tmp_particles[diff_node_mask]
 
     def predict(self, timestamp_secs):
         """Performs a prediction step, estimates the new node and resamples the particles based on the prediction model only."""
